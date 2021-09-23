@@ -54,14 +54,20 @@ pub fn fib() -> Fibonacci {
 
 fn main() {
 
-    let v : Vec<char> = vec!['+', '+', '>', '<', '-', '-', '[', ']', '.'];
+    //let v : Vec<char> = vec!['+', '+', '>', '<', '-', '-', '[', ']', '.'];
+    let v : Vec<char> = vec!['+', '+', '>', '<', '-', '-', '<', '>', '.', '.', '.', '.'];
     let mut code = String::from("");
+    let mut block = String::from("");
 
-    const CODE_LEN:usize = 201;
-    let cap = 48;
+    const BLOCK_NUM:u128 = 40;
+    const BLOCK_LEN:usize = 320;
+
+    let cap = 40;
     let mut seed:u128 = 2 + rand::thread_rng().gen_range(1..128);
     let mut last:u128= seed;
     let mut iter:u128 = 0;
+    let mut num_of_blocks:u128 = 0;
+    let mut prev_char: char = ' ';
 
     loop {
         iter += 1;
@@ -69,31 +75,46 @@ fn main() {
         let c: char= {
             last += fib().take((5+(seed+last)%42).try_into().unwrap()).last().unwrap();
             last += rand::thread_rng().gen_range(1..65);
+            let picks: Vec<char> = match prev_char {
+                '+' => vec!['+', '+', '+', '+', '+', '+', '+', '+', '>', '<', '[', ']', '.', '.'],
+                '-' => vec!['-', '-', '+', '+', '+', '>', '<', '+', '[', ']', '.', '.', '.', '.'],
+                '.' => vec!['+', '+', '>', '>','>','>','>','<','<','<','<','<', '<', '-', '-', '[', ']'],
+                '>' => vec!['+', '+', '>', '>','>','>','>', '-', '-', '[', ']', '.'],
+                '<' => vec!['+', '+', '<', '<','<','<','<', '-', '-', '[', ']', '.'],
+                '[' => vec!['+', '+', '>', '>','>','>','>','<','<','<','<','<', '<', '-', '-', '['],
+                ']' => vec!['+', '+', '>', '>','>','>','>','<','<','<','<','<', '<', '-', '-', ']'],
+                _ => vec!['+', '>', '<', '-', '[', ']', '.']
+            };
             //println!("{}", last);
             let i: usize = last.try_into().unwrap();
             //println!("{}", i%8);
-            v[i%v.len()]
+            prev_char = picks[i%picks.len()];
+            prev_char
         };
 
-        if (code.len() >= CODE_LEN) {
-            let result = match brainfuck::eval_string(&code) {
+        if (block.len() >= BLOCK_LEN) {
+            let result = match brainfuck::eval_string(&block) {
                 Ok(n) => {
-                    println!("{}", code);
-                    break;
+                    println!("{}", block);
+                    code.push_str(&block);
+                    num_of_blocks += 1;
                 },
-                Err(_) => {
+                _ => {
                     //println!("> {}", iter);
-                    code = "".to_string();
                     let new_seed = rand::thread_rng().gen_range(1..65);
                     seed = new_seed;
-                    continue;
+                    block = "".to_string();
                 }
             };
             //break;
         } else {
-            code.push(c);
+            block.push(c);
         }
 
+        if (num_of_blocks >= BLOCK_NUM) {
+            println!("{}", code);
+            break;
+        }
 
         //print!("{}", c);
     }
